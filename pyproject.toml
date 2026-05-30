@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "universal-skill-tree-naneg"
+version = "0.2.0"
+description = "Plug & Play skill framework — connect any LLM to your PC in 3 lines"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["ai", "llm", "agent", "tools", "skills", "automation"]
+
+# ─── CORE (always installed, ultra-light) ────────────────────────────────────
+dependencies = [
+    "httpx>=0.27",          # HTTP async/sync — remplace requests
+    "pydantic>=2.0",        # Validation des paramètres de skills
+]
+
+[project.optional-dependencies]
+# ─── BRANCHES (install only what you need) ───────────────────────────────────
+system   = ["psutil>=6.0", "pyautogui>=0.9", "keyboard>=0.13", "pyperclip>=1.9"]
+files    = ["python-docx>=1.1", "openpyxl>=3.1", "pdfplumber>=0.11"]
+web      = ["httpx>=0.27", "beautifulsoup4>=4.12", "ddgs>=1.0"]
+media    = ["pycaw>=20181226; sys_platform=='win32'"]
+apps     = ["psutil>=6.0"]
+vision   = ["pillow>=10.0", "mss>=9.0"]
+osint    = ["geocoder>=1.38", "sherlock-project>=0.14.3"]
+selfhosted = ["requests>=2.31.0"]
+cyber    = ["scapy>=2.5.0"]
+crypto   = ["ccxt>=4.4.15"]
+ai       = ["crewai>=0.40", "litellm>=1.40"]
+browser  = ["playwright>=1.45"]
+aitools  = ["requests>=2.31.0"]
+agent_skills = ["requests>=2.31.0"]
+mcp      = ["requests>=2.31.0", "mcp>=1.0.0"]
+
+# Tout installer d'un coup
+all = [
+    "universal-skill-tree[system]",
+    "universal-skill-tree[files]",
+    "universal-skill-tree[web]",
+    "universal-skill-tree[media]",
+    "universal-skill-tree[apps]",
+    "universal-skill-tree[vision]",
+    "universal-skill-tree[osint]",
+    "universal-skill-tree[selfhosted]",
+    "universal-skill-tree[cyber]",
+    "universal-skill-tree[crypto]",
+    "universal-skill-tree[ai]",
+    "universal-skill-tree[browser]",
+    "universal-skill-tree[aitools]",
+    "universal-skill-tree[agent_skills]",
+    "universal-skill-tree[mcp]",
+]
+
+adapters = ["google-genai>=0.5", "litellm>=1.40", "ollama>=0.3"]
+
+# Dev / tests
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
+
+[project.urls]
+Homepage   = "https://github.com/anonyme-afk/universal-skill-tree"
+Repository = "https://github.com/anonyme-afk/universal-skill-tree"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ust"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

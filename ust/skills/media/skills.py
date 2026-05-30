@@ -1,0 +1,285 @@
+""" ust.skills.media """\nfrom __future__ import annotations\nimport os\nimport json\nfrom ust.core.registry import skill\n\n@skill(\n    name="text_to_speech",\n    branch="media",\n    description="Convertit du texte en fichier audio MP3 (gTTS, gratuit)",\n    parameters={
+    "properties": {
+        "text": {
+            "type": "string"
+        },
+        "lang": {
+            "type": "string"
+        },
+        "output": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "text"
+    ]
+},\n)\ndef text_to_speech(text: str, lang: str = "fr", output: str = "output.mp3") -> str:
+    # --- P&P Checks ---
+    try:
+        from gtts import gTTS
+        tts = gTTS(text=text, lang=lang)
+        tts.save(output)
+        return f"Audio généré : {output}"
+    except ImportError as e:
+        reqs_str = " ".join(['gtts', 'playsound']) if ['gtts', 'playsound'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="text_to_speech_openai",\n    branch="media",\n    description="TTS haute qualité via OpenAI (voix nova, alloy, echo...)",\n    parameters={
+    "properties": {
+        "text": {
+            "type": "string"
+        },
+        "voice": {
+            "type": "string"
+        },
+        "output": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "text"
+    ]
+},\n)\ndef text_to_speech_openai(text: str, voice: str = "nova", output: str = "speech.mp3") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("OPENAI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENAI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        r = client.audio.speech.create(model="tts-1", voice=voice, input=text)
+        r.stream_to_file(output)
+        return f"Audio OpenAI : {output}"
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="play_audio",\n    branch="media",\n    description="Joue un fichier audio",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path"
+    ]
+},\n)\ndef play_audio(path: str) -> str:
+    # --- P&P Checks ---
+    try:
+        import pygame, time
+        pygame.mixer.init()
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
+        return f"Audio joué : {path}"
+    except ImportError as e:
+        reqs_str = " ".join(['pygame']) if ['pygame'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="record_audio",\n    branch="media",\n    description="Enregistre l'audio du microphone",\n    parameters={
+    "properties": {
+        "duration": {
+            "type": "integer"
+        },
+        "output": {
+            "type": "string"
+        },
+        "sample_rate": {
+            "type": "integer"
+        }
+    }
+},\n)\ndef record_audio(duration: int = 5, output: str = "recording.wav", sample_rate: int = 44100) -> str:
+    # --- P&P Checks ---
+    try:
+        import sounddevice as sd
+        from scipy.io.wavfile import write
+        print(f"Enregistrement pendant {duration}s...")
+        data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1)
+        sd.wait()
+        write(output, sample_rate, data)
+        return f"Audio enregistré : {output}"
+    except ImportError as e:
+        reqs_str = " ".join(['sounddevice', 'scipy']) if ['sounddevice', 'scipy'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="download_youtube_audio",\n    branch="media",\n    description="Télécharge l'audio d'une vidéo YouTube en MP3",\n    parameters={
+    "properties": {
+        "url": {
+            "type": "string"
+        },
+        "output_folder": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "url"
+    ]
+},\n)\ndef download_youtube_audio(url: str, output_folder: str = ".") -> str:
+    # --- P&P Checks ---
+    try:
+        import yt_dlp
+        opts = {"format": "bestaudio/best", "outtmpl": f"{output_folder}/%(title)s.%(ext)s",
+                "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}]}
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            ydl.download([url])
+        return f"Audio téléchargé dans {output_folder}"
+    except ImportError as e:
+        reqs_str = " ".join(['yt-dlp']) if ['yt-dlp'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="download_youtube_video",\n    branch="media",\n    description="Télécharge une vidéo YouTube",\n    parameters={
+    "properties": {
+        "url": {
+            "type": "string"
+        },
+        "output_folder": {
+            "type": "string"
+        },
+        "quality": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "url"
+    ]
+},\n)\ndef download_youtube_video(url: str, output_folder: str = ".", quality: str = "best") -> str:
+    # --- P&P Checks ---
+    try:
+        import yt_dlp
+        opts = {"format": quality, "outtmpl": f"{output_folder}/%(title)s.%(ext)s"}
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            ydl.download([url])
+        return f"Vidéo téléchargée dans {output_folder}"
+    except ImportError as e:
+        reqs_str = " ".join(['yt-dlp']) if ['yt-dlp'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="get_youtube_info",\n    branch="media",\n    description="Retourne les infos d'une vidéo YouTube (titre, durée, vues...)",\n    parameters={
+    "properties": {
+        "url": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "url"
+    ]
+},\n)\ndef get_youtube_info(url: str) -> dict:
+    # --- P&P Checks ---
+    try:
+        import yt_dlp
+        with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        return {"title": info.get("title"), "duration": info.get("duration"), "views": info.get("view_count"), "channel": info.get("channel"), "description": (info.get("description") or "")[:500]}
+    except ImportError as e:
+        reqs_str = " ".join(['yt-dlp']) if ['yt-dlp'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="play_spotify",\n    branch="media",\n    description="Contrôle Spotify (play, pause, next) via l'API Spotipy",\n    parameters={
+    "properties": {
+        "action": {
+            "type": "string"
+        }
+    }
+},\n)\ndef play_spotify(action: str = "pause") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("SPOTIFY_CLIENT_ID"):
+        return "Erreur Plug & Play : clé API manquante (SPOTIFY_CLIENT_ID). Ajoutez-la dans .env.ust puis réessayez."
+    if not os.getenv("SPOTIFY_CLIENT_SECRET"):
+        return "Erreur Plug & Play : clé API manquante (SPOTIFY_CLIENT_SECRET). Ajoutez-la dans .env.ust puis réessayez."
+    if not os.getenv("SPOTIFY_REDIRECT_URI"):
+        return "Erreur Plug & Play : clé API manquante (SPOTIFY_REDIRECT_URI). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        import spotipy
+        from spotipy.oauth2 import SpotifyOAuth
+        sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+            client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+            client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
+            redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
+            scope="user-modify-playback-state"
+        ))
+        if action == "play": sp.start_playback()
+        elif action == "pause": sp.pause_playback()
+        elif action == "next": sp.next_track()
+        elif action == "previous": sp.previous_track()
+        return f"Spotify: {action}"
+    except ImportError as e:
+        reqs_str = " ".join(['spotipy']) if ['spotipy'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="get_spotify_current_track",\n    branch="media",\n    description="Retourne la chanson en cours sur Spotify",\n    parameters={},\n)\ndef get_spotify_current_track() -> dict:
+    # --- P&P Checks ---
+    if not os.getenv("SPOTIFY_CLIENT_ID"):
+        return "Erreur Plug & Play : clé API manquante (SPOTIFY_CLIENT_ID). Ajoutez-la dans .env.ust puis réessayez."
+    if not os.getenv("SPOTIFY_CLIENT_SECRET"):
+        return "Erreur Plug & Play : clé API manquante (SPOTIFY_CLIENT_SECRET). Ajoutez-la dans .env.ust puis réessayez."
+    if not os.getenv("SPOTIFY_REDIRECT_URI"):
+        return "Erreur Plug & Play : clé API manquante (SPOTIFY_REDIRECT_URI). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        import spotipy
+        from spotipy.oauth2 import SpotifyOAuth
+        sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+            client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+            client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
+            redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
+            scope="user-read-currently-playing"
+        ))
+        t = sp.current_user_playing_track()
+        if not t: return {"playing": False}
+        return {"title": t["item"]["name"], "artist": t["item"]["artists"][0]["name"], "playing": t["is_playing"]}
+    except ImportError as e:
+        reqs_str = " ".join(['spotipy']) if ['spotipy'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="generate_qr_code",\n    branch="media",\n    description="Génère un QR code et le sauvegarde en image",\n    parameters={
+    "properties": {
+        "data": {
+            "type": "string"
+        },
+        "output": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "data"
+    ]
+},\n)\ndef generate_qr_code(data: str, output: str = "qrcode.png") -> str:
+    # --- P&P Checks ---
+    try:
+        import qrcode
+        img = qrcode.make(data)
+        img.save(output)
+        return f"QR code sauvegardé : {output}"
+    except ImportError as e:
+        reqs_str = " ".join(['qrcode', 'pillow']) if ['qrcode', 'pillow'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+

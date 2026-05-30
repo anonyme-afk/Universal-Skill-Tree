@@ -1,0 +1,383 @@
+""" ust.skills.files """\nfrom __future__ import annotations\nimport os\nimport json\nfrom ust.core.registry import skill\n\n@skill(\n    name="read_file",\n    branch="files",\n    description="Lit le contenu d'un fichier texte",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path"
+    ]
+},\n)\ndef read_file(path: str) -> str:
+    # --- P&P Checks ---
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="write_file",\n    branch="files",\n    description="Écrit du texte dans un fichier",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        },
+        "content": {
+            "type": "string"
+        },
+        "append": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "path",
+        "content"
+    ]
+},\n)\ndef write_file(path: str, content: str, append: bool = False) -> str:
+    # --- P&P Checks ---
+    try:
+        mode = "a" if append else "w"
+        with open(path, mode, encoding="utf-8") as f:
+            f.write(content)
+        return f"Fichier écrit : {path}"
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="list_files",\n    branch="files",\n    description="Liste les fichiers d'un dossier",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        },
+        "pattern": {
+            "type": "string"
+        }
+    }
+},\n)\ndef list_files(path: str = ".", pattern: str = "*") -> list:
+    # --- P&P Checks ---
+    try:
+        import glob
+        return glob.glob(f"{path}/{pattern}")
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="search_in_files",\n    branch="files",\n    description="Cherche un texte dans tous les fichiers d'un dossier",\n    parameters={
+    "properties": {
+        "folder": {
+            "type": "string"
+        },
+        "search_text": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "folder",
+        "search_text"
+    ]
+},\n)\ndef search_in_files(folder: str, search_text: str) -> list:
+    # --- P&P Checks ---
+    try:
+        import os
+        results = []
+        for root, _, files in os.walk(folder):
+            for f in files:
+                path = os.path.join(root, f)
+                try:
+                    with open(path, "r", encoding="utf-8", errors="ignore") as fp:
+                        for i, line in enumerate(fp, 1):
+                            if search_text.lower() in line.lower():
+                                results.append({"file": path, "line": i, "content": line.strip()})
+                except:
+                    pass
+        return results
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="read_pdf",\n    branch="files",\n    description="Extrait le texte d'un fichier PDF",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path"
+    ]
+},\n)\ndef read_pdf(path: str) -> str:
+    # --- P&P Checks ---
+    try:
+        import fitz
+        doc = fitz.open(path)
+        return "\n".join([page.get_text() for page in doc])
+    except ImportError as e:
+        reqs_str = " ".join(['pymupdf']) if ['pymupdf'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="read_excel",\n    branch="files",\n    description="Lit un fichier Excel et retourne les données",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        },
+        "sheet": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path"
+    ]
+},\n)\ndef read_excel(path: str, sheet: str = None) -> list:
+    # --- P&P Checks ---
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(path)
+        ws = wb[sheet] if sheet else wb.active
+        return [[cell.value for cell in row] for row in ws.iter_rows()]
+    except ImportError as e:
+        reqs_str = " ".join(['openpyxl']) if ['openpyxl'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="read_csv",\n    branch="files",\n    description="Lit un fichier CSV et retourne les données",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path"
+    ]
+},\n)\ndef read_csv(path: str) -> list:
+    # --- P&P Checks ---
+    try:
+        import csv
+        with open(path, "r", encoding="utf-8") as f:
+            return list(csv.DictReader(f))
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="write_csv",\n    branch="files",\n    description="Écrit des données dans un fichier CSV",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        },
+        "data": {
+            "type": "array"
+        },
+        "headers": {
+            "type": "array"
+        }
+    },
+    "required": [
+        "path",
+        "data",
+        "headers"
+    ]
+},\n)\ndef write_csv(path: str, data: list, headers: list) -> str:
+    # --- P&P Checks ---
+    try:
+        import csv
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=headers)
+            w.writeheader()
+            w.writerows(data)
+        return f"CSV écrit : {path}"
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="compress_folder",\n    branch="files",\n    description="Compresse un dossier en ZIP",\n    parameters={
+    "properties": {
+        "folder_path": {
+            "type": "string"
+        },
+        "output_path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "folder_path",
+        "output_path"
+    ]
+},\n)\ndef compress_folder(folder_path: str, output_path: str) -> str:
+    # --- P&P Checks ---
+    try:
+        import shutil
+        shutil.make_archive(output_path.replace(".zip",""), "zip", folder_path)
+        return f"Archive créée : {output_path}"
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="extract_zip",\n    branch="files",\n    description="Extrait un fichier ZIP",\n    parameters={
+    "properties": {
+        "zip_path": {
+            "type": "string"
+        },
+        "extract_to": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "zip_path"
+    ]
+},\n)\ndef extract_zip(zip_path: str, extract_to: str = ".") -> str:
+    # --- P&P Checks ---
+    try:
+        import zipfile
+        with zipfile.ZipFile(zip_path, "r") as z:
+            z.extractall(extract_to)
+        return f"Extrait dans : {extract_to}"
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="convert_image",\n    branch="files",\n    description="Convertit une image vers un autre format (PNG, JPEG, WEBP...)",\n    parameters={
+    "properties": {
+        "input_path": {
+            "type": "string"
+        },
+        "output_path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "input_path",
+        "output_path"
+    ]
+},\n)\ndef convert_image(input_path: str, output_path: str) -> str:
+    # --- P&P Checks ---
+    try:
+        from PIL import Image
+        img = Image.open(input_path)
+        img.save(output_path)
+        return f"Image convertie : {output_path}"
+    except ImportError as e:
+        reqs_str = " ".join(['pillow']) if ['pillow'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="resize_image",\n    branch="files",\n    description="Redimensionne une image",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        },
+        "width": {
+            "type": "integer"
+        },
+        "height": {
+            "type": "integer"
+        },
+        "output": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path",
+        "width",
+        "height",
+        "output"
+    ]
+},\n)\ndef resize_image(path: str, width: int, height: int, output: str) -> str:
+    # --- P&P Checks ---
+    try:
+        from PIL import Image
+        img = Image.open(path).resize((width, height))
+        img.save(output)
+        return f"Image redimensionnée : {output}"
+    except ImportError as e:
+        reqs_str = " ".join(['pillow']) if ['pillow'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="pdf_to_images",\n    branch="files",\n    description="Convertit chaque page d'un PDF en image",\n    parameters={
+    "properties": {
+        "pdf_path": {
+            "type": "string"
+        },
+        "output_folder": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "pdf_path"
+    ]
+},\n)\ndef pdf_to_images(pdf_path: str, output_folder: str = "pdf_pages") -> str:
+    # --- P&P Checks ---
+    try:
+        import fitz, os
+        from PIL import Image
+        os.makedirs(output_folder, exist_ok=True)
+        doc = fitz.open(pdf_path)
+        for i, page in enumerate(doc):
+            pix = page.get_pixmap()
+            pix.save(f"{output_folder}/page_{i+1}.png")
+        return f"{len(doc)} pages extraites dans {output_folder}"
+    except ImportError as e:
+        reqs_str = " ".join(['pymupdf', 'pillow']) if ['pymupdf', 'pillow'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="get_file_info",\n    branch="files",\n    description="Retourne les métadonnées d'un fichier",\n    parameters={
+    "properties": {
+        "path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "path"
+    ]
+},\n)\ndef get_file_info(path: str) -> dict:
+    # --- P&P Checks ---
+    try:
+        import os, datetime
+        s = os.stat(path)
+        return {
+            "name": os.path.basename(path),
+            "size_kb": round(s.st_size / 1024, 2),
+            "created": str(datetime.datetime.fromtimestamp(s.st_ctime)),
+            "modified": str(datetime.datetime.fromtimestamp(s.st_mtime)),
+            "extension": os.path.splitext(path)[1]
+        }
+    except ImportError as e:
+        reqs_str = " ".join([]) if [] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+

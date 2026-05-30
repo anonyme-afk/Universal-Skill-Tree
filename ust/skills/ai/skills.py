@@ -1,0 +1,276 @@
+""" ust.skills.ai """\nfrom __future__ import annotations\nimport os\nimport json\nfrom ust.core.registry import skill\n\n@skill(\n    name="chat_openai",\n    branch="ai",\n    description="Envoie un message à GPT-4o / GPT-3.5 via OpenAI",\n    parameters={
+    "properties": {
+        "prompt": {
+            "type": "string"
+        },
+        "model": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "prompt"
+    ]
+},\n)\ndef chat_openai(prompt: str, model: str = "gpt-4o-mini") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("OPENAI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENAI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        r = client.chat.completions.create(model=model, messages=[{"role":"user","content":prompt}])
+        return r.choices[0].message.content
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="chat_gemini",\n    branch="ai",\n    description="Envoie un message à Google Gemini",\n    parameters={
+    "properties": {
+        "prompt": {
+            "type": "string"
+        },
+        "model": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "prompt"
+    ]
+},\n)\ndef chat_gemini(prompt: str, model: str = "gemini-pro") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("GEMINI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (GEMINI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        m = genai.GenerativeModel(model)
+        return m.generate_content(prompt).text
+    except ImportError as e:
+        reqs_str = " ".join(['google-generativeai']) if ['google-generativeai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="chat_ollama",\n    branch="ai",\n    description="Parle à un LLM local via Ollama (llama3, mistral, etc.)",\n    parameters={
+    "properties": {
+        "prompt": {
+            "type": "string"
+        },
+        "model": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "prompt"
+    ]
+},\n)\ndef chat_ollama(prompt: str, model: str = "llama3") -> str:
+    # --- P&P Checks ---
+    try:
+        import ollama
+        r = ollama.chat(model=model, messages=[{"role":"user","content":prompt}])
+        return r['message']['content']
+    except ImportError as e:
+        reqs_str = " ".join(['ollama']) if ['ollama'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="chat_openrouter",\n    branch="ai",\n    description="Accède à 200+ modèles via OpenRouter",\n    parameters={
+    "properties": {
+        "prompt": {
+            "type": "string"
+        },
+        "model": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "prompt"
+    ]
+},\n)\ndef chat_openrouter(prompt: str, model: str = "openai/gpt-4o-mini") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("OPENROUTER_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENROUTER_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPENROUTER_API_KEY"))
+        r = client.chat.completions.create(model=model, messages=[{"role":"user","content":prompt}])
+        return r.choices[0].message.content
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="chat_anthropic",\n    branch="ai",\n    description="Parle à Claude (Anthropic) via l'API officielle",\n    parameters={
+    "properties": {
+        "prompt": {
+            "type": "string"
+        },
+        "model": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "prompt"
+    ]
+},\n)\ndef chat_anthropic(prompt: str, model: str = "claude-3-haiku-20240307") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (ANTHROPIC_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        msg = client.messages.create(model=model, max_tokens=1024, messages=[{"role":"user","content":prompt}])
+        return msg.content[0].text
+    except ImportError as e:
+        reqs_str = " ".join(['anthropic']) if ['anthropic'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="generate_image_dalle",\n    branch="ai",\n    description="Génère une image via DALL-E 3",\n    parameters={
+    "properties": {
+        "prompt": {
+            "type": "string"
+        },
+        "size": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "prompt"
+    ]
+},\n)\ndef generate_image_dalle(prompt: str, size: str = "1024x1024") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("OPENAI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENAI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        r = client.images.generate(model="dall-e-3", prompt=prompt, size=size, n=1)
+        return r.data[0].url
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="transcribe_whisper",\n    branch="ai",\n    description="Transcrit un fichier audio en texte via Whisper (OpenAI)",\n    parameters={
+    "properties": {
+        "audio_path": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "audio_path"
+    ]
+},\n)\ndef transcribe_whisper(audio_path: str) -> str:
+    # --- P&P Checks ---
+    if not os.getenv("OPENAI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENAI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        with open(audio_path, "rb") as f:
+            r = client.audio.transcriptions.create(model="whisper-1", file=f)
+        return r.text
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="transcribe_whisper_local",\n    branch="ai",\n    description="Transcrit un fichier audio localement via faster-whisper (gratuit, offline)",\n    parameters={
+    "properties": {
+        "audio_path": {
+            "type": "string"
+        },
+        "model_size": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "audio_path"
+    ]
+},\n)\ndef transcribe_whisper_local(audio_path: str, model_size: str = "base") -> str:
+    # --- P&P Checks ---
+    try:
+        from faster_whisper import WhisperModel
+        model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        segments, _ = model.transcribe(audio_path)
+        return " ".join([s.text for s in segments])
+    except ImportError as e:
+        reqs_str = " ".join(['faster-whisper']) if ['faster-whisper'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="embed_text",\n    branch="ai",\n    description="Génère des embeddings vectoriels d'un texte (OpenAI)",\n    parameters={
+    "properties": {
+        "text": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "text"
+    ]
+},\n)\ndef embed_text(text: str) -> list:
+    # --- P&P Checks ---
+    if not os.getenv("OPENAI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENAI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        r = client.embeddings.create(input=text, model="text-embedding-3-small")
+        return r.data[0].embedding
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
+@skill(\n    name="analyze_image_vision",\n    branch="ai",\n    description="Analyse une image avec GPT-4 Vision",\n    parameters={
+    "properties": {
+        "image_url": {
+            "type": "string"
+        },
+        "question": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "image_url"
+    ]
+},\n)\ndef analyze_image_vision(image_url: str, question: str = "Décris cette image") -> str:
+    # --- P&P Checks ---
+    if not os.getenv("OPENAI_API_KEY"):
+        return "Erreur Plug & Play : clé API manquante (OPENAI_API_KEY). Ajoutez-la dans .env.ust puis réessayez."
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        r = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role":"user","content":[
+                {"type":"text","text":question},
+                {"type":"image_url","image_url":{"url":image_url}}
+            ]}]
+        )
+        return r.choices[0].message.content
+    except ImportError as e:
+        reqs_str = " ".join(['openai']) if ['openai'] else str(e)
+        return "Erreur Plug & Play : package manquant. Demandez a utilisateur de lancer : pip install " + reqs_str
+    except Exception as e:
+        return f"Erreur inattendue : {e}"
+
+
