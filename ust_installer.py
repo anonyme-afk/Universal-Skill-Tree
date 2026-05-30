@@ -1,4 +1,4 @@
-# --------------------------------------------------*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 UST Smart Installer - Zero Error, Full Auto
 Double-click → tout est configuré automatiquement.
@@ -300,7 +300,7 @@ def _find_key():
         if v: return v
     env_file = Path(__file__).parent / ".env.ust"
     if env_file.exists():
-        for line in env_file.read_text().splitlines():
+        for line in env_file.read_text(encoding="utf-8", errors="ignore").splitlines():
             if "=" in line and not line.strip().startswith("#"):
                 k, v = line.split("=", 1)
                 if v.strip() not in ("", "METS-TA-CLE-ICI"):
@@ -344,7 +344,7 @@ if __name__ == "__main__":
 
 def generate_bridge(root: Path, branches: list, api_keys: dict) -> Path:
     bridge = root / "ust_bridge.py"
-    bridge.write_text(BRIDGE.format(branches=repr(branches)), encoding="utf-8")
+    bridge.write_text(BRIDGE.replace("{branches}", repr(branches)), encoding="utf-8")
     return bridge
 
 # ==================================================
@@ -444,7 +444,7 @@ def main():
             f"Python {major}.{minor} trop ancien (besoin 3.10+)",
             "Telecharge Python 3.12 sur https://python.org/downloads"
         )
-        input("  Appuie sur Entree pour quitter...")
+        # input("  Appuie sur Entree pour quitter...")
         return
 
     # -------------------------------------------------- 2. Détection projet -----------------------
@@ -559,7 +559,7 @@ def main():
         print()
 
     log("INSTALL END")
-    input(f"\n  {clr('Appuie sur Entree pour fermer...', C.GR)}")
+    # input(f"\n  {clr('Appuie sur Entree pour fermer...', C.GR)}")
 
 
 if __name__ == "__main__":
@@ -572,4 +572,4 @@ if __name__ == "__main__":
         import traceback; traceback.print_exc()
         print(f"\n  Erreur inattendue : {e}")
         print(f"  Details dans ust_install.log")
-        input("  Appuie sur Entree pour fermer...")
+        # input("  Appuie sur Entree pour fermer...")

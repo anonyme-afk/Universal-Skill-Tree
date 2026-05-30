@@ -24,6 +24,38 @@ from .core.gemini_adapter import GeminiAdapter
 from .core.litellm_adapter import LiteLLMAdapter
 from .core.ollama_adapter import OllamaAdapter
 
+# ─── Secrets Middleware ────────────────────────────────────────────────────────
+
+from contextlib import contextmanager
+import os
+
+@contextmanager
+def require_secrets(*var_names: str):
+    """
+    Context manager to ensure required environment variables are set.
+    Looks for them in the environment or an optional .env.ust file.
+    
+    Example:
+        with require_secrets("OPENAI_API_KEY", "SPOTIFY_CLIENT_ID"):
+            agent.chat_sync(...)
+    """
+    try:
+        import dotenv
+        dotenv.load_dotenv(".env.ust")
+    except ImportError:
+        pass # python-dotenv not available, relying on pure os.environ
+        
+    missing = []
+    for var in var_names:
+        if not os.getenv(var):
+            missing.append(var)
+            
+    if missing:
+        missing_str = ", ".join(missing)
+        raise ValueError(f"UST_ConfigurationError: Missing environment variables: {missing_str}. Please set them in .env.ust or your environment.")
+        
+    yield
+
 # ─── Branch loader map ────────────────────────────────────────────────────────
 
 _BRANCH_MODULES: dict[str, str] = {
@@ -57,6 +89,19 @@ _BRANCH_MODULES: dict[str, str] = {
 
 _loaded_branches: set[str] = set()
 
+import logging
+
+logger = logging.getLogger("ust")
+
+def set_log_level(level: int):
+    """Set the logging level for UST."""
+    logger.setLevel(level)
+
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('[UST] %(message)s'))
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 def enable_branch(branch: str) -> None:
     """
@@ -77,15 +122,18 @@ def enable_branch(branch: str) -> None:
         available = ", ".join(_BRANCH_MODULES.keys())
         raise ValueError(f"Unknown branch '{branch}'. Available: {available}")
 
-    import importlib
+    import importlib.util
     try:
+        if not importlib.util.find_spec(module_path):
+            logger.warning(f"⚠️ Branch '{branch}' is not yet compiled. Please run `python import_skills_catalog.py`")
+            return
         importlib.import_module(module_path)
         _loaded_branches.add(branch)
         registry = get_registry()
         skill_count = len(registry.branch(branch))
-        print(f"[UST] ✅ Branch '{branch}' loaded — {skill_count} skills active")
+        logger.info(f"✅ Branch '{branch}' loaded — {skill_count} skills active")
     except ImportError as e:
-        print(f"[UST] ⚠️  Branch '{branch}' partially loaded (missing optional deps): {e}")
+        logger.warning(f"⚠️  Branch '{branch}' partially loaded (missing optional deps) or not compiled: {e}")
         _loaded_branches.add(branch)
 
 
@@ -112,6 +160,11 @@ __all__ = [
     "OllamaAdapter",
     "get_registry",
     "Executor",
+    "require_secrets"
 ]
 
-__version__ = "0.1.0"
+try:
+    import importlib.metadata
+    __version__ = importlib.metadata.version("universal-skill-tree-naneg")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.2.0"

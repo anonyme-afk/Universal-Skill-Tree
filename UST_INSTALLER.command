@@ -7,7 +7,7 @@
 # Se placer dans le bon dossier
 cd "$(dirname "$0")"
 
-# S'auto-rendre exécutable
+# S'auto-rendre executable
 chmod +x "$0"
 
 # -- Chercher Python -------------------------------

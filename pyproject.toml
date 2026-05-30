@@ -14,10 +14,10 @@ keywords = ["ai", "llm", "agent", "tools", "skills", "automation"]
 # ─── CORE (always installed, ultra-light) ────────────────────────────────────
 dependencies = [
     "httpx>=0.27",          # HTTP async/sync — remplace requests
-    "pydantic>=2.0",        # Validation des paramètres de skills
 ]
 
 [project.optional-dependencies]
+validation = ["pydantic>=2.0"]
 # ─── BRANCHES (install only what you need) ───────────────────────────────────
 system   = ["psutil>=6.0", "pyautogui>=0.9", "keyboard>=0.13", "pyperclip>=1.9"]
 files    = ["python-docx>=1.1", "openpyxl>=3.1", "pdfplumber>=0.11"]
@@ -37,21 +37,21 @@ mcp      = ["requests>=2.31.0", "mcp>=1.0.0"]
 
 # Tout installer d'un coup
 all = [
-    "universal-skill-tree[system]",
-    "universal-skill-tree[files]",
-    "universal-skill-tree[web]",
-    "universal-skill-tree[media]",
-    "universal-skill-tree[apps]",
-    "universal-skill-tree[vision]",
-    "universal-skill-tree[osint]",
-    "universal-skill-tree[selfhosted]",
-    "universal-skill-tree[cyber]",
-    "universal-skill-tree[crypto]",
-    "universal-skill-tree[ai]",
-    "universal-skill-tree[browser]",
-    "universal-skill-tree[aitools]",
-    "universal-skill-tree[agent_skills]",
-    "universal-skill-tree[mcp]",
+    "universal-skill-tree-naneg[system]",
+    "universal-skill-tree-naneg[files]",
+    "universal-skill-tree-naneg[web]",
+    "universal-skill-tree-naneg[media]",
+    "universal-skill-tree-naneg[apps]",
+    "universal-skill-tree-naneg[vision]",
+    "universal-skill-tree-naneg[osint]",
+    "universal-skill-tree-naneg[selfhosted]",
+    "universal-skill-tree-naneg[cyber]",
+    "universal-skill-tree-naneg[crypto]",
+    "universal-skill-tree-naneg[ai]",
+    "universal-skill-tree-naneg[browser]",
+    "universal-skill-tree-naneg[aitools]",
+    "universal-skill-tree-naneg[agent_skills]",
+    "universal-skill-tree-naneg[mcp]",
 ]
 
 adapters = ["google-genai>=0.5", "litellm>=1.40", "ollama>=0.3"]
@@ -62,6 +62,9 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
 [project.urls]
 Homepage   = "https://github.com/anonyme-afk/universal-skill-tree"
 Repository = "https://github.com/anonyme-afk/universal-skill-tree"
+
+[project.scripts]
+ust = "ust.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ust"]

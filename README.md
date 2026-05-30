@@ -3,151 +3,192 @@
 ![PyPI](https://img.shields.io/pypi/v/universal-skill-tree-naneg)
 🔗 **Lien PyPI :** [universal-skill-tree-naneg sur PyPI](https://pypi.org/project/universal-skill-tree-naneg/)
 
-**Le framework de skills Plug & Play pour connecter tout à votre agent IA en 3 lignes de code.**
+**Le framework de compétences Plug & Play pour connecter n'importe quel LLM à votre PC et au web en 3 lignes de code.**
 
 ---
 
-#  Guide d'Intégration Complet : Connecter UST à votre IA (De A à Z)
+##  Guide d'Intégration Complet
 
-Ce guide explique les étapes indispensables pour fusionner, de bout en bout, **Universal Skill Tree (UST)** avec votre projet d'IA existant (comme *Mark-XXXIX-OR*, AutoGPT, LangChain, etc.). 
-
-Suivez ce manuel industriel, détaillé de fond en comble, pour un déploiement sans erreurs.
+Ce document présente l'intégralité du module **Universal Skill Tree (UST)**. Suivez ce manuel pour un déploiement sécurisé, performant et sans friction.
 
 ---
 
-##  Étape 1 : Préparation et Récupération des Fichiers
+##  Étape 1 : Préparation et Placement des Fichiers
 
-Avant toute chose, vous devez avoir les fichiers sur votre ordinateur.
+Pour intégrer les compétences à votre agent IA, assurez-vous de placer ces fichiers clés **à la racine de votre projet d'IA** (à côté de votre script principal comme `main.py`) :
 
-1. **Votre projet IA** : Assurez-vous d'avoir téléchargé et extrait le dossier contenant votre IA (qui comporte un fichier d'entrée comme `main.py` ou `app.py`).
-2. **Le Universal Skill Tree** : Téléchargez et extrayez le dossier de `Universal-Skill-Tree`.
+*   `skills_catalog.py` *(Le catalogue brut contenant les signatures et configurations des compétences)*
+*   `import_skills_catalog.py` *(Le moteur de compilation local responsable de générer l'arborescence des modules)*
+*   `ust_installer.py` & Scripts `.bat` / `.sh` / `.command` *(L'installateur intelligent à un clic)*
 
----
-
-##  Étape 2 : Le Déplacement Manuel des Fichiers (Crucial)
-
-Pour que votre IA puisse apprendre les compétences, les fichiers d'importation de UST doivent se trouver au même endroit que le cœur de votre IA. C'est l'erreur la plus commune (qui cause les plantages de type "File Not Found").
-
-Ouvrez le dossier de **Universal-Skill-Tree**, copiez les fichiers suivants, et collez-les **directement à la racine du dossier de votre IA** :
-
-* `skills_catalog.py` *(Contient la base de données brute des 200+ compétences)*
-* `import_skills_catalog.py` *(Le moteur de compilation des compétences)*
-* *Optionnel (Smart Installer)* : Vous pouvez aussi copier `UST_INSTALLER.bat`, `UST_INSTALLER.command`, `UST_INSTALLER.sh`, et `ust_installer.py` si vous souhaitez utiliser l'interface d'installation automatisée (qui repère les fichiers et s'occupe de tout).
-
->  **À quoi doit ressembler l'arborescence de votre dossier d'IA maintenant ?**
-> À la racine de votre projet d'IA, vous devez voir cohabiter :
-> - `main.py` (ou le cœur de votre IA)
-> - `skills_catalog.py`
-> - `import_skills_catalog.py`
-
----
-
-##  Étape 3 : Installation et Compilation via le Terminal
-
-Maintenant que les fichiers sont placés au bon endroit, vous devez installer le framework et générer l'architecture des compétences ("compiler" le catalogue) pour qu'elles soient comprises par votre programme.
-
-1. **Ouvrez votre Terminal (Mac/Linux) ou Invite de commandes / PowerShell (Windows)**.
-2. **Naviguez** dans le dossier exact de votre IA via la commande `cd chemin/vers/votre/dossier/ia`.
-
-3. **Installez le cœur du framework (via PIP) :**
-```bash
-pip install --upgrade universal-skill-tree-naneg
-```
-*(Cela configure les fondations de l'outil et télécharge les dépendances requises globalement sur votre système).*
-
-4. **Injectez et compilez le catalogue de compétences :**
-Exécutez le script d'importation pour générer toute l'arborescence `ust/skills/...` en local :
-```bash
-python import_skills_catalog.py
-```
-*(Note : Sous Windows, utilisez la commande `python` ou `py`. Sous Mac/Linux, utilisez `python3`).*
-
----
-
-##  Étape 4 : Connecter UST dans le Code de l'IA (Le "Câblage")
-
-Pour que votre IA puisse utiliser ces super-pouvoirs de façon native, vous devez la relier via le bridge (le pont de connexion) dans son fichier de départ (ex: `main.py`).
-
-1. **Ajouter la liaison (Tout en haut du fichier `main.py`) :**
-Le bridge UST exporte deux fonctions essentielles. Exigez-les en haut de votre script :
-```python
-from ust_bridge import run_ust, get_ust_tools
-```
-*(Note : Si vous ne possédez pas de fichier `ust_bridge.py`, pas de panique, la bibliothèque pip possède les siens, ou vous pouvez exécuter un des installateurs (comme `UST_INSTALLER.bat`) pour le générer automatiquement).*
-
-2. **Donner les outils (Tools) à votre IA :**
-Dans la configuration du prompt, du client OpenAI, ou des paramètres de votre LLM, pointez vers la fonction qui liste les outils afin que l'IA connaisse ses nouvelles capacités.
-```python
-# Renseigne l'IA sur toutes les compétences de l'ordinateur
-outils_ia = get_ust_tools()
-
-# Lors de l'appel au modèle d'IA (exemple fictif type OpenAI) :
-# response = client.chat.completions.create(
-#     model="gpt-4o",
-#     messages=historique,
-#     tools=outils_ia
-# )
-```
-
-3. **Intercepter et Exécuter les Actions :**
-Dès que l'IA renvoie un "Tool Call" ou détecte qu'elle doit utiliser une compétence matérielle/logicielle (par exemple, "Je lance Spotify"), envoyez la requête directement à UST.
-```python
-# Laissez UST trouver, exécuter et vérifier le module appelé automatiquement :
-reponse_outil = run_ust("L'ordre textuel de l'IA ici ou la requête structurée")
-print(reponse_outil)
-```
-
----
-
-##  Étape 5 : Configuration des Clés API et Sécurité
-
-Avoir les compétences c'est bien, avoir les droits d'accès c'est indispensable. UST utilise un standard industriel de gestion sécurisée via variables d'environnement.
-
-Lors de l'installation, un fichier d'environnement masqué a été créé.
-
-1. Cherchez un fichier nommé `.env.ust` (ou simplement `.env`) à la racine de votre dossier d'IA. S'il n'existe pas, créez-le.
-2. Ouvrez ce fichier avec un éditeur de texte classique (Bloc-notes, VS Code, etc.).
-3. Renseignez-y vos clés secrètes en remplaçant la valeur par défaut (`METS-TA-CLE-ICI`). Par exemple :
-
-```env
-# Clé requise pour le LLM principal (Gratuite sur https://openrouter.ai)
-OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxx
-
-# Pour la compétence Météo
-OPENWEATHERMAP_API_KEY=TaCleIci
-
-# Pour les compétences Spotify
-SPOTIPY_CLIENT_ID=TonID
-SPOTIPY_CLIENT_SECRET=TonSecret
-SPOTIPY_REDIRECT_URI=http://localhost:8080
-
-# etc.
-```
-
-** RÈGLES DE SÉCURITÉ INDUSTRIELLES :**
-- Ne partagez **jamais** votre fichier `.env.ust`.
-- Si vous utilisez Git ou GitHub, assurez-vous d'avoir ajouté `.env.ust` et `.env` dans votre fichier `.gitignore` afin de ne jamais divulguer vos identifiants publiquement sur internet.
-
----
-
-##  Architecture Finale Attendue (Vérification)
-
-Afin d'être sûr(e) d'avoir réussi l'intégration sans faille, vérifiez l'arborescence de votre projet. Après avoir exécuté les commandes, elle devrait ressembler très exactement à ceci :
-
+### 📁 Structure Attendue de votre Projet d'IA :
 ```text
-📁 Ton-Dossier-IA/
- ├── 📄 main.py (Ton programme IA modifié avec les 3 lignes de connexion)
- ├── 📄 skills_catalog.py (Le dictionnaire brut des compétences fourni)
- ├── 📄 import_skills_catalog.py (Le script compilateur fourni)
- ├── 📄 ust_bridge.py (Le pont de communication, généré automatiquement)
- ├── 📄 .env.ust (Fichier caché contenant tes mots de passe et clés API)
- └── 📁 ust/ (Dossier généré automatiquement)
-      └── 📁 skills/ (Toutes les compétences compilées et classées prêt à l'emploi)
-           ├── 📁 ai/
-           ├── 📁 web/
-           ├── 📁 productivity/
-           └── ... (Les 200+ modules)
+📁 Ton-Projet-IA/
+ ├── 📄 main.py (Script de démarrage de ton IA)
+ ├── 📄 skills_catalog.py (Fourni)
+ ├── 📄 import_skills_catalog.py (Fourni)
+ ├── 📄 ust_installer.py (Fourni)
+ └── 📄 .env.ust (Fichier de configuration de tes clés)
 ```
 
-##  Vous êtes prêt(e) !
-Votre agent d'intelligence artificielle est maintenant connecté au reste de votre ordinateur et du web, propulsé de manière propre et industrielle par l'architecture Plug & Play de **Universal Skill Tree**.
+---
+
+##  Étape 2 : Installation & Compilation
+
+Vous pouvez installer et configurer UST de deux manières : automatique ou manuelle.
+
+### Option A : L'Installateur Intelligent (Recommandé)
+Lancez simplement le script adapté à votre système depuis la racine de votre projet :
+* **Windows** : Double-cliquez sur `UST_INSTALLER.bat`
+* **Mac** : Exécutez `UST_INSTALLER.command`
+* **Linux** : Exécutez `./UST_INSTALLER.sh`
+
+L'installateur va automatiquement créer un environnement virtuel `.ust_venv`, y installer le paquet `universal-skill-tree-naneg`, compiler vos compétences, et générer un fichier de pont prêt à l'emploi nommé `ust_bridge.py`.
+
+### Option B : Installation Manuelle (Ligne de Commande)
+1. Installez le cœur du framework :
+   ```bash
+   pip install --upgrade universal-skill-tree-naneg
+   ```
+2. Compilez le catalogue d'importation de compétences au sein de votre environnement pour générer l'arborescence `ust/skills/` locale :
+   ```bash
+   python3 import_skills_catalog.py
+   ```
+
+---
+
+##  Étape 3 : Chargement des Branches et API Publique
+
+UST est construit de manière modulaire. Vous n'activez et n'installez que les compétences (les "branches") dont vous avez besoin pour garder votre application légère.
+
+```python
+from ust import enable_branch, enable_all, status, get_registry
+
+# Charger uniquement les modules nécessaires
+enable_branch("system")  # 15 compétences système actives (CPU, RAM, Processus, etc.)
+enable_branch("web")     # 14 compétences web actives (Recherche, Scraping, etc.)
+enable_branch("files")   # 14 compétences de gestion de fichiers actives (Lecture, Écriture, etc.)
+
+# Ou activer absolument toutes les branches disponibles
+# enable_all()
+
+# Afficher un résumé des compétences prêtes à l'emploi
+status()
+```
+
+---
+
+## 🔌 Étape 4 : Connexion des LLM via nos Adapteurs Natifs
+
+UST intègre des adaptateurs asynchrones ultra-rapides pour acheminer tout l'historique et les appels d'outils automatiques.
+
+### 1. USTAdapter (Pour serveurs compatibles OpenAI / OpenRouter)
+```python
+import asyncio
+from ust import USTAdapter, enable_branch
+
+async def main():
+    enable_branch("system")
+    
+    # Initialiser l'adaptateur avec votre clé et modèle de choix
+    agent = USTAdapter(api_key="ta-cle-api", model="openai/gpt-4o-mini")
+    
+    # Envoyer un ordre en langage naturel
+    reply = await agent.chat("Donne-moi l'état actuel de mon processeur et de ma mémoire vive.")
+    print("Réponse de l'IA :", reply)
+
+asyncio.run(main())
+```
+
+### 2. GeminiAdapter (Google GenAI natif)
+Se connecte à l'API Gemini de Google via le SDK moderne `@google/genai` :
+```python
+from ust import GeminiAdapter
+# agent = GeminiAdapter(api_key="GEMINI_API_KEY")
+# reply = await agent.chat("Fais une capture d'écran et sauvegarde-la.")
+```
+
+### 3. LiteLLMAdapter (Multi-fournisseurs universel)
+```python
+from ust import LiteLLMAdapter
+# agent = LiteLLMAdapter(model="anthropic/claude-3-5-sonnet")
+```
+
+### 4. OllamaAdapter (Pour vos modèles locaux)
+```python
+from ust import OllamaAdapter
+# agent = OllamaAdapter(model="llama3")
+```
+
+---
+
+##  Gestion de la Sécurité et des Autorisations
+
+###  Middleware de Secrets (`require_secrets`)
+Vous pouvez blinder la sécurité de votre application en exigeant que certaines clés d'API soient configurées de manière étanche avant l'interaction de votre agent :
+
+```python
+from ust import require_secrets
+
+with require_secrets("OPENAI_API_KEY", "OPENWEATHERMAP_API_KEY"):
+    # Vos appels d'agents s'exécutent en toute confiance
+    pass
+```
+
+###  Gestion des Outils Dangereux
+Certaines compétences (comme l'exécution de commandes shell `run_command` ou la neutralisation de processus `kill_process`) sont marquées comme **hautement sensibles**.
+* UST intègre un avertissement interne automatique si un de ces outils est invoqué sans gestionnaire de confirmation explicite configuré.
+
+###  Contrôle dynamique du Registre
+Il est facile d'activer ou de désactiver des compétences individuellement au runtime pour affiner les autorisations :
+
+```python
+registry = get_registry()
+
+# Désactiver temporairement l'exécution de ligne de commande
+registry.disable("run_command")
+
+# Réactiver à la volée une compétence
+registry.enable("run_command")
+```
+
+---
+
+##  Répertoire des 20+ Branches Disponibles
+
+Le framework supporte un large éventail de spécialisations à travers des bibliothèques légères activables par dépendances optionnelles (PIP Extras) :
+
+| Branche | Description | PIP Extras à installer |
+|:---|:---|:---|
+| **`system`** | Contrôle matériel de la machine, presse-papier, processus, volume. | `universal-skill-tree-naneg[system]` |
+| **`files`** | Analyse de documents, lecture/écriture, métadonnées, CSV/Excel/Word. | `universal-skill-tree-naneg[files]` |
+| **`web`** | Moteur de recherche DuckDuckGo, scraping HTTPX et parseur HTML. | `universal-skill-tree-naneg[web]` |
+| **`vision`** | Captures d'écran multi-écrans, gestion des images et formats. | `universal-skill-tree-naneg[vision]` |
+| **`browser`** | Web scraping dynamique et screenshots complets. | `universal-skill-tree-naneg[browser]` |
+| **`smarthome`**| Intégration Home Assistant & objets connectés. | `universal-skill-tree-naneg[selfhosted]` |
+| **`media`** | Gestion audio de l'ordinateur. | `universal-skill-tree-naneg[media]` |
+| **`ai`** | Orchestration de sous-agents (CrewAI, LiteLLM). | `universal-skill-tree-naneg[ai]` |
+
+Pour tout installer d'un coup, configurez simplement :
+```bash
+pip install universal-skill-tree-naneg[all]
+```
+
+---
+
+##  Lancement des Tests Locaux
+
+Pour s'assurer que votre implémentation est irréprochable et tester le comportement de la logique des outils en local sans consommer de crédit d'API payant :
+
+```bash
+python3 tests/test_ust.py
+
+python tests/test_ust.py
+```
+
+*Les 32 tests de bout en bout valideront le chargement, l'idempotence, le câblage de l'exécuteur de tâches, les middlewares de sécurité, ainsi que les mocks d'adaptateurs IA.*
+
+---
+
+##  Prêt à propulser votre IA !
+Grâce à l'architecture Plug & Play industrielle de **Universal Skill Tree**, votre agent dispose dorénavant d'un pont transparent pour interagir en toute sécurité avec le système d'exploitation et l'internet moderne.

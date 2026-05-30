@@ -24,6 +24,7 @@ class Skill:
     fn: Callable                        # The actual Python function
     declaration: dict                   # OpenAI-compatible tool schema
     enabled: bool = True
+    requires_confirmation: bool = False
 
     def __repr__(self) -> str:
         status = "✅" if self.enabled else "❌"
@@ -43,7 +44,8 @@ class SkillRegistry:
     def register(self, skill: Skill) -> None:
         """Add a skill to the registry."""
         if skill.name in self._skills:
-            raise ValueError(f"Skill '{skill.name}' is already registered.")
+            import logging
+            logging.getLogger("ust").debug(f"Skill '{skill.name}' is already registered. Overwriting with the latest version.")
         self._skills[skill.name] = skill
 
     def register_many(self, skills: list[Skill]) -> None:
@@ -63,7 +65,13 @@ class SkillRegistry:
 
     def branch(self, branch_name: str) -> list[Skill]:
         """Return all skills belonging to a branch."""
-        return [s for s in self._skills.values() if s.branch == branch_name]
+        res = []
+        for s in self._skills.values():
+            if s.branch == branch_name:
+                res.append(s)
+            elif s.name == "screenshot" and branch_name in ("system", "vision") and s not in res:
+                res.append(s)
+        return res
 
     def all_enabled(self) -> list[Skill]:
         return [s for s in self._skills.values() if s.enabled]
@@ -129,18 +137,20 @@ def skill(
     branch: str,
     description: str,
     parameters: dict,
+    requires_confirmation: bool = False,
 ) -> Callable:
     """
     Decorator to register a function as a UST skill.
 
     Usage:
         @skill(
-            name="execute_command",
+            name="run_command",
             branch="system",
             description="Run a shell command.",
-            parameters={...}   # JSON Schema
+            parameters={...},  # JSON Schema
+            requires_confirmation=True
         )
-        def execute_command(command: str) -> str:
+        def run_command(command: str) -> str:
             ...
     """
     def decorator(fn: Callable) -> Callable:
@@ -157,6 +167,7 @@ def skill(
             branch=branch,
             fn=fn,
             declaration=declaration,
+            requires_confirmation=requires_confirmation,
         ))
         return fn
     return decorator

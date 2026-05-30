@@ -12,7 +12,7 @@ import asyncio
 import inspect
 import json
 import traceback
-from typing import Any
+from typing import Any, Callable
 
 from .registry import get_registry
 
@@ -62,6 +62,16 @@ class Executor:
 
     def __init__(self):
         self._registry = get_registry()
+        self._confirmation_handler = None
+        
+    def set_confirmation_handler(self, handler: Callable[[str, dict], bool]) -> None:
+        """
+        Set a callback that will be called before executing a skill marked
+        with `requires_confirmation=True`.
+        If the callback returns False, the skill execution is aborted.
+        Callback signature: handler(skill_name: str, args: dict) -> bool
+        """
+        self._confirmation_handler = handler
 
     # ── Single call ───────────────────────────────────────────────────────────
 
@@ -93,6 +103,18 @@ class Executor:
 
         if not skill.enabled:
             return ToolResult(call_id, fn_name, None, f"Skill '{fn_name}' is disabled")
+            
+        # Hardcoded list of dangerous commands in case requires_confirmation is missing from catalog
+        dangerous = {"run_command", "kill_process", "docker_run", "create_dockerfile", "install_package", "git_commit_push"}
+        needs_confirm = skill.requires_confirmation or (fn_name in dangerous)
+        
+        if needs_confirm:
+            if self._confirmation_handler:
+                if not self._confirmation_handler(fn_name, args):
+                    return ToolResult(call_id, fn_name, None, f"Execution aborted by user confirmation handler")
+            else:
+                import logging
+                logging.getLogger("ust").warning(f"⚠️ DANGEROUS SKILL '{fn_name}' RUNNING WITHOUT CONFIRMATION HANDLER!")
 
         # Execute
         try:

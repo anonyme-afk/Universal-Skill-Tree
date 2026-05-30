@@ -238,6 +238,7 @@ def get_disk_usage(path: str = "/") -> dict:
         "requires": [],
         "env_vars": [],
         "parameters": {"command": "str"},
+        "requires_confirmation": True,
         "code": """
 def run_command(command: str) -> str:
     import subprocess
@@ -270,6 +271,7 @@ def list_processes() -> list:
         "requires": ["psutil"],
         "env_vars": [],
         "parameters": {"pid": "int"},
+        "requires_confirmation": True,
         "code": """
 def kill_process(pid: int) -> str:
     import psutil
@@ -657,8 +659,11 @@ FILE_SKILLS = [
         "parameters": {"path": "str"},
         "code": """
 def read_file(path: str) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return f"ERROR: {e}"
 """
     },
     {
@@ -1330,15 +1335,61 @@ def ha_turn_off(entity_id: str) -> str:
         "env_vars": ["HA_URL", "HA_TOKEN"],
         "parameters": {"entity_id": "str", "rgb": "list", "brightness": "int = 255"},
         "code": """def ha_set_light_color(entity_id: str, rgb: list, brightness: int = 255) -> str:
-    return "Skipped because truncated"
+    import requests, os
+    domain = entity_id.split(".")[0]
+    r = requests.post(f"{os.getenv('HA_URL')}/api/services/{domain}/turn_on",
+        headers={"Authorization": f"Bearer {os.getenv('HA_TOKEN')}"},
+        json={"entity_id": entity_id, "rgb_color": rgb, "brightness": brightness})
+    return f"Couleur changée : {entity_id} (status {r.status_code})"
 """
     }
 ]
 
 
-SECURITY_SKILLS = []
-DATA_SKILLS = []
-MISC_SKILLS = []
+SECURITY_SKILLS = [
+    {
+        "name": "generate_password",
+        "category": "security",
+        "description": "Génère un mot de passe sécurisé",
+        "requires": [],
+        "env_vars": [],
+        "parameters": {"length": "int = 16"},
+        "code": """def generate_password(length: int = 16) -> str:
+    import secrets, string
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(alphabet) for i in range(length))
+"""
+    }
+]
+
+DATA_SKILLS = [
+    {
+        "name": "parse_json",
+        "category": "data",
+        "description": "Parse un string JSON",
+        "requires": [],
+        "env_vars": [],
+        "parameters": {"json_str": "str"},
+        "code": """def parse_json(json_str: str) -> dict:
+    import json
+    return json.loads(json_str)
+"""
+    }
+]
+
+MISC_SKILLS = [
+    {
+        "name": "echo",
+        "category": "misc",
+        "description": "Echo le texte",
+        "requires": [],
+        "env_vars": [],
+        "parameters": {"text": "str"},
+        "code": """def echo(text: str) -> str:
+    return text
+"""
+    }
+]
 
 # ══════════════════════════════════════════════════════════════════
 # 🤖  CATÉGORIE 11 : AUTOMATISATION & NAVIGATION WEB (Selenium/Playwright)
